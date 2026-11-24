@@ -1,0 +1,78 @@
+# =============================================================================
+#  AI Object Eraser - configuration
+#  Every property can be overridden with an environment variable, e.g.
+#  AI_ERASER_PROVIDER=cloud  or  AI_ERASER_CLOUD_API_KEY=sk-...
+# =============================================================================
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,application/javascript,application/json
+
+spring:
+  application:
+    name: ai-object-eraser
+  threads:
+    virtual:
+      enabled: true          # request handling on virtual threads (Java 21)
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 45MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+ai:
+  eraser:
+    # Which inpainting engine to use:  demo | cloud | onnx
+    provider: demo
+
+    # ---- Pre/post processing (all providers) --------------------------------
+    dilation-radius: 6        # px the mask is grown to swallow shadows/halos
+    feather-radius: 2         # px soft edge used when compositing the result
+    limits:
+      max-file-size: 20MB
+      max-pixels: 16000000    # ~16 MP; larger images are rejected
+
+    # ---- Async job pipeline (SSE) --------------------------------------------
+    jobs:
+      concurrency: 2          # parallel inpainting jobs
+      queue-capacity: 16      # waiting jobs before HTTP 429
+      ttl: 10m                # finished jobs are kept this long
+
+    # ---- provider = demo: pure-Java diffusion inpainting (no setup) ---------
+    demo:
+      smoothing-passes: 48    # Gauss-Seidel passes after the inward fill
+      grain: 0.8              # 0 = perfectly smooth, 1 = match surrounding noise
+      seed: 42                # deterministic noise
+
+    # ---- provider = cloud: Stability-compatible /v2beta erase API ------------
+    cloud:
+      base-url: https://api.stability.ai          # or https://stability.comfy.org
+      api-key: ${STABILITY_API_KEY:}
+      api-key-header: Authorization               # use "api-key" for gateways that expect it
+      api-key-prefix: "Bearer "                   # use "" together with api-key-header: api-key
+      grow-mask: 0            # server-side grow (0-20). The local dilation above already grows the mask.
+      output-format: png      # png | jpeg | webp
+      connect-timeout: 10s
+      read-timeout: 120s
+
+    # ---- provider = onnx: local LaMa model through DJL + ONNX Runtime -------
+    onnx:
+      model-path: models/lama_fp32.onnx   # e.g. Carve/LaMa-ONNX (512x512, inputs: image, mask)
+      input-size: 512
+      context-margin: 0.6     # extra context around the mask, relative to its size
+      image-input-name: image
+      mask-input-name: mask
+
+logging:
+  level:
+    com.example.objecteraser: INFO

@@ -1,0 +1,26 @@
+# docker compose up --build
+#   demo (default):  docker compose up --build
+#   cloud:           AI_ERASER_PROVIDER=cloud STABILITY_API_KEY=sk-... docker compose up --build
+#   onnx:            put lama_fp32.onnx into ./models, then AI_ERASER_PROVIDER=onnx docker compose up --build
+services:
+  eraser:
+    build: .
+    image: ai-object-eraser:latest
+    ports:
+      - "8080:8080"
+    environment:
+      AI_ERASER_PROVIDER: ${AI_ERASER_PROVIDER:-demo}
+      STABILITY_API_KEY: ${STABILITY_API_KEY:-}
+      AI_ERASER_CLOUD_BASE_URL: ${AI_ERASER_CLOUD_BASE_URL:-https://api.stability.ai}
+      AI_ERASER_CLOUD_API_KEY_HEADER: ${AI_ERASER_CLOUD_API_KEY_HEADER:-Authorization}
+      AI_ERASER_CLOUD_API_KEY_PREFIX: ${AI_ERASER_CLOUD_API_KEY_PREFIX:-Bearer }
+      AI_ERASER_ONNX_MODEL_PATH: /models/lama_fp32.onnx
+    volumes:
+      - ./models:/models:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

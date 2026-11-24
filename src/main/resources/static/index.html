@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Object Eraser</title>
+  <meta name="description" content="Paint over anything you want gone from a photo and watch it disappear.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c2530'/%3E%3Cpath d='M9 21 18 8l6 5-9 13z' fill='%23e5233b'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="brand">Object Eraser</h1>
+    <span class="engine" id="engine" title="Inpainting engine in use">Engine: …</span>
+  </header>
+
+  <main class="bench">
+    <section class="stage" id="stage" aria-label="Photo workspace">
+
+      <label class="drop" id="drop" for="file">
+        <input type="file" id="file" accept="image/png,image/jpeg,image/webp" hidden>
+        <span class="drop-title">Drop a photo here, or choose one</span>
+        <span class="drop-hint">PNG, JPG or WEBP. You can also paste an image.</span>
+      </label>
+
+      <div class="canvas-wrap" id="editor" hidden>
+        <canvas id="base"></canvas>
+        <canvas id="overlay" aria-label="Paint over the objects you want to remove"></canvas>
+        <div class="ring" id="ring" hidden></div>
+      </div>
+
+      <div class="compare" id="compare" hidden style="--pos:50%">
+        <img id="afterImg" alt="Photo with the object erased" draggable="false">
+        <img id="beforeImg" class="before" alt="Original photo" draggable="false">
+        <span class="tag tag-before">Before</span>
+        <span class="tag tag-after">After</span>
+        <div class="handle" id="handle" role="slider" tabindex="0" aria-label="Compare before and after"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="grip"></span></div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="Tools">
+      <div class="group" id="tools" hidden>
+        <div class="field">
+          <label for="brush">Brush size <output id="brushOut">40</output></label>
+          <input type="range" id="brush" min="6" max="160" value="40">
+        </div>
+        <div class="field">
+          <label for="grow">Edge grow <output id="growOut">6</output> px</label>
+          <input type="range" id="grow" min="0" max="40" value="6">
+          <p class="help">Extends the mask so shadows and halos around the object go too.</p>
+        </div>
+        <div class="row">
+          <button type="button" id="undo" class="btn" disabled>Undo</button>
+          <button type="button" id="redo" class="btn" disabled>Redo</button>
+          <button type="button" id="clear" class="btn" disabled>Clear mask</button>
+        </div>
+        <label class="switch"><input type="checkbox" id="showMask" checked><span>Show mask</span></label>
+      </div>
+
+      <ol class="stages" id="stages" hidden>
+        <li data-stage="VALIDATING">Uploading &amp; Validating</li>
+        <li data-stage="DILATING">Dilating Mask Edges</li>
+        <li data-stage="INPAINTING">AI Inpainting</li>
+        <li data-stage="FINALIZING">Harmonizing &amp; Finalizing</li>
+      </ol>
+      <div class="bar" id="bar" hidden><i id="barFill"></i></div>
+
+      <div class="group" id="results" hidden>
+        <div class="row">
+          <button type="button" id="dlPng" class="btn btn-solid">Download PNG</button>
+          <button type="button" id="dlWebp" class="btn btn-solid">Download WEBP</button>
+        </div>
+        <div class="row">
+          <button type="button" id="again" class="btn">Erase more from this result</button>
+          <button type="button" id="editMask" class="btn">Edit mask</button>
+        </div>
+      </div>
+
+      <p class="status" id="status" role="status" aria-live="polite">Start by adding a photo.</p>
+
+      <div class="actions" id="actions" hidden>
+        <button type="button" id="erase" class="btn btn-primary" disabled>Erase</button>
+        <button type="button" id="swap" class="btn">Choose another photo</button>
+      </div>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
